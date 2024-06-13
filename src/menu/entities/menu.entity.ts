@@ -1,5 +1,5 @@
-import { BaseEntity } from 'src/common/base.entity';
 import { Column, Entity } from 'typeorm';
+import { BaseEntity } from 'src/common/base.entity';
 
 @Entity()
 export class Menu extends BaseEntity {
