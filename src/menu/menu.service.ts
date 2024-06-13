@@ -2,17 +2,39 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { MenuRepository } from './menu.repository';
 import { Menu } from './entities/menu.entity';
+import { v4 as uuid } from 'uuid';
+import { S3Service } from 'src/s3/s3.service';
+import { INVALID_INPUT_DATA, MENU_NOT_FOUND } from './menu.error';
 
 @Injectable()
 export class MenuService {
-  constructor(private readonly menuRepository: MenuRepository) {}
+  constructor(
+    private readonly menuRepository: MenuRepository,
+    private readonly s3Service: S3Service,
+  ) {}
 
   async create(createMenuDto: CreateMenuDto): Promise<boolean> {
     const { name, image } = createMenuDto;
+    let uploadImage: string;
 
-    if (!name || !image) throw new BadRequestException('Invalid input data');
+    if (!name || !image) throw new BadRequestException(INVALID_INPUT_DATA);
 
-    await this.menuRepository.save(new Menu({ name, image }));
+    if (image) {
+      const { fileName, mimeType, fileContent } = image;
+      const newFileName = `${uuid()}-${fileName}`;
+
+      const upload = await this.s3Service.uploadObject(
+        newFileName,
+        fileContent,
+        mimeType,
+      );
+
+      uploadImage = upload.Key;
+    }
+
+    await this.menuRepository.save(
+      new Menu({ name, image: uploadImage ? uploadImage : null }),
+    );
     return true;
   }
 
@@ -30,7 +52,7 @@ export class MenuService {
   async remove(id: string): Promise<void> {
     const menu = await this.menuRepository.getMenu(id);
 
-    if (!menu) throw new BadRequestException('Menu not found');
+    if (!menu) throw new BadRequestException(MENU_NOT_FOUND);
 
     await this.menuRepository.softRemove(menu);
   }
