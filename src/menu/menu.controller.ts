@@ -1,34 +1,39 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  UploadedFile,
+} from '@nestjs/common';
 import { MenuService } from './menu.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
-import { UpdateMenuDto } from './dto/update-menu.dto';
 
 @Controller('menu')
 export class MenuController {
   constructor(private readonly menuService: MenuService) {}
 
   @Post()
-  create(@Body() createMenuDto: CreateMenuDto) {
-    return this.menuService.create(createMenuDto);
+  async create(
+    @Body() createMenuDto: CreateMenuDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    createMenuDto.image = {
+      fileName: file.originalname,
+      mimeType: file.mimetype,
+      fileContent: file.buffer,
+    };
+    return await this.menuService.create(createMenuDto);
   }
 
   @Get()
-  findAll() {
-    return this.menuService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.menuService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMenuDto: UpdateMenuDto) {
-    return this.menuService.update(+id, updateMenuDto);
+  async menus() {
+    return await this.menuService.menus();
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.menuService.remove(+id);
+  async remove(@Param('id') id: string) {
+    return await this.menuService.remove(id);
   }
 }
