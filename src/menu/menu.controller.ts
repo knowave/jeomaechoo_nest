@@ -6,11 +6,14 @@ import {
   Param,
   Delete,
   UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { MenuService } from './menu.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('menu')
+@UseInterceptors(FileInterceptor('image'))
 export class MenuController {
   constructor(private readonly menuService: MenuService) {}
 
