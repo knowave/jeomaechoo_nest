@@ -9,6 +9,6 @@ export class Menu extends BaseEntity {
   @Column('text', { comment: 'menu image' })
   image: string;
 
-  @Column({ comment: 'selected menu count' })
-  selectedCount: number;
+  @Column({ comment: 'selected menu count', nullable: true })
+  selectedCount?: number;
 }
