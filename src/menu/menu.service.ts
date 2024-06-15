@@ -5,6 +5,7 @@ import { Menu } from './entities/menu.entity';
 import { v4 as uuid } from 'uuid';
 import { S3Service } from 'src/s3/s3.service';
 import { INVALID_INPUT_DATA, MENU_NOT_FOUND } from './menu.error';
+import { AWS_S3_BUCKET_NAME } from 'src/common/env';
 
 @Injectable()
 export class MenuService {
@@ -29,7 +30,7 @@ export class MenuService {
         mimeType,
       );
 
-      uploadImage = upload.Key;
+      uploadImage = `https://${AWS_S3_BUCKET_NAME}.s3.ap-northeast-2.amazonaws.com/${upload.Key}`;
     }
 
     await this.menuRepository.save(
