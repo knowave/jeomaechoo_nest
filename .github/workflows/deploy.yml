@@ -43,16 +43,17 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@${{ secrets.AWS_EC2_HOST }} << 'EOF'
-            cd ~/app
-            git pull origin main
-            docker-compose down
-            docker-compose up -d --build | tee deployment.log  # 🔥 로그 저장
-            echo "✅ Deployment complete!"
-          EOF
+            cd /home/ubuntu/app
 
-      - name: Check Docker Logs
-        run: |
-          ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@${{ secrets.AWS_EC2_HOST }} "cat ~/app/deployment.log"
+            if docker-compose ps | grep 'Up'; then
+              echo "🛑 컨테이너 실행 중 → docker-compose down 실행"
+              docker-compose down
+            else
+              echo "✅ 실행 중인 컨테이너가 없음 → down 스킵"
+            fi
+
+            docker-compose up -d --build > deployment.log 2>&1
+          EOF
 
       - name: Clean up SSH Key
         run: rm -f project.pem
