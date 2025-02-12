@@ -38,10 +38,6 @@ jobs:
             AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             ORIGIN=${{ secrets.ORIGIN }}
-            EOT
-
-            echo "✅ .env file created in ~/app/.env"
-            cat .env
           EOF
 
       - name: Deploy to EC2
@@ -50,9 +46,13 @@ jobs:
             cd ~/app
             git pull origin main
             docker-compose down
-            docker-compose up -d --build
+            docker-compose up -d --build | tee deployment.log  # 🔥 로그 저장
             echo "✅ Deployment complete!"
           EOF
+
+      - name: Check Docker Logs
+        run: |
+          ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@${{ secrets.AWS_EC2_HOST }} "cat ~/app/deployment.log"
 
       - name: Clean up SSH Key
         run: rm -f project.pem
