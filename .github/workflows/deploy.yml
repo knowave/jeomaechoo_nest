@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: Deploy to AWS EC2
 
 on:
   push:
@@ -10,68 +10,42 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Set up SSH key
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Build Docker image
+      - name: Set up SSH Key
         run: |
-          docker build -t jeomaechoo_server .
-          docker tag jeomaechoo_server:latest ${{ secrets.AWS_EC2_HOST }}:8080/jeomaechoo_server:latest
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 --decode > private_key.pem
+          chmod 600 private_key.pem
 
-      - name: Push Docker image to EC2 registry
+      - name: Create .env file on EC2
         run: |
-          docker save jeomaechoo_server | bzip2 | ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.AWS_EC2_HOST }} 'bunzip2 | docker load'
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            cd ~/app
 
-      - name: Remove existing env file if it exists
-        run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.AWS_EC2_HOST }} 'rm -f /home/ubuntu/.env'
+            echo "DATABASE_HOST=${{ secrets.DATABASE_HOST }}" > .env
+            echo "DATABASE_PORT=${{ secrets.DATABASE_PORT }}" >> .env
+            echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> .env
+            echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
+            echo "DATABASE_NAME=${{ secrets.DATABASE_NAME }}" >> .env
+            echo "AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}" >> .env
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
+            echo "ORIGIN=${{ secrets.ORIGIN }}" >> .env
+
+            echo "✅ .env file created in ~/app/.env"
+            cat .env
+          EOF
 
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.AWS_EC2_HOST }} << 'EOF'
-            docker stop chopsticks-external-marketplace || true
-            docker rm chopsticks-external-marketplace || true
-            docker run -d -p 4000:4000 --name chopsticks-external-marketplace --restart always -v $(pwd)/.env:/app/.env chopsticks-external-marketplace:latest
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            cd ~/app
+            git pull origin main
+            docker-compose down
+            docker-compose up -d --build
+            echo "✅ Deployment complete!"
           EOF
 
-      - name: Create env file on EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.AWS_EC2_HOST }} << 'EOF'
-            touch /home/ubuntu/.env
-            echo "DATABASE_HOST=${{ secrets.DATABASE_HOST }}" >> /home/ubuntu/.env
-            echo "DATABASE_PORT=${{ secrets.DATABASE_PORT }}" >> /home/ubuntu/.env
-            echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> /home/ubuntu/.env
-            echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> /home/ubuntu/.env
-            echo "DATABASE_NAME=${{ secrets.DATABASE_NAME }}" >> /home/ubuntu/.env
-            echo "AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}" >> /home/ubuntu/.env
-            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> /home/ubuntu/.env
-            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> /home/ubuntu/.env
-            echo "ORIGIN=${{ secrets.ORIGIN }}" >> /home/ubuntu/.env
-            cat /home/ubuntu/.env
-          EOF
-
-      - name: Cleanup old Docker images
-        run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.AWS_EC2_HOST }} << 'EOF'
-            docker system prune -f
-          EOF
-
-      - name: Docker run
-        run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.AWS_EC2_HOST }} << 'EOF'
-            docker stop jeomaechoo_server || true
-            docker rm jeomaechoo_server || true
-            docker rmi jeomaechoo_server:latest || true
-            docker run -d -p 8080:8080 --name jeomaechoo_server --restart always -v /home/ubuntu/.env:/app/.env jeomaechoo_server:latest
-          EOF
-
-      - name: Cleanup old Docker images
-        run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.AWS_EC2_HOST }} << 'EOF'
-            docker system prune -f
-          EOF
+      - name: Clean up SSH Key
+        run: rm -f private_key.pem
