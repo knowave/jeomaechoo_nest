@@ -14,3 +14,6 @@ export const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
 
 // Origin Environment Variables
 export const ORIGIN = process.env.ORIGIN;
+
+// NODE_ENV Environment Variables Check;
+export const IS_NODE_ENV_PROD = process.env.NODE_ENV === 'prod';
