@@ -19,6 +19,13 @@ jobs:
           chmod 600 project.pem
           ls -lah project.pem
 
+      - name: Debug Secret Values
+        run: |
+          echo "AWS_EC2_HOST=${{ secrets.AWS_EC2_HOST }}"
+          echo "DATABASE_HOST=${{ secrets.DATABASE_HOST }}"
+          echo "DATABASE_PORT=${{ secrets.DATABASE_PORT }}"
+          echo "EC2_SSH_KEY=${{ secrets.EC2_SSH_KEY }}"
+
       - name: Test SSH Connection
         run: |
           ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@ec2-${{ secrets.AWS_EC2_HOST }}.ap-northeast-2.compute.amazonaws.com "echo '✅ SSH 연결 성공!'"
