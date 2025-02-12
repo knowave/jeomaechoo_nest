@@ -15,9 +15,9 @@ jobs:
 
       - name: Set up SSH Key
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" | base64 --decode > project.pem
+          echo "${{ secrets.EC2_SSH_KEY }}" > project.pem
           chmod 600 project.pem
-          ls -lah project.pem  # 🔥 Key 파일이 정상적으로 생성되었는지 확인
+          ls -lah project.pem
 
       - name: Test SSH Connection
         run: |
@@ -25,18 +25,20 @@ jobs:
 
       - name: Create .env file on EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@ec2-${{ secrets.AWS_EC2_HOST }}.ap-northeast-2.compute.amazonaws.com << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@ec2-${{ secrets.AWS_EC2_HOST }}.ap-northeast-2.compute.amazonaws.com << EOF
             cd ~/app
 
-            echo "DATABASE_HOST=${{ secrets.DATABASE_HOST }}" > .env
-            echo "DATABASE_PORT=${{ secrets.DATABASE_PORT }}" >> .env
-            echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> .env
-            echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
-            echo "DATABASE_NAME=${{ secrets.DATABASE_NAME }}" >> .env
-            echo "AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}" >> .env
-            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
-            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
-            echo "ORIGIN=${{ secrets.ORIGIN }}" >> .env
+            cat <<EOT > .env
+            DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+            DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+            DATABASE_USER=${{ secrets.DATABASE_USER }}
+            DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+            DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+            AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}
+            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            ORIGIN=${{ secrets.ORIGIN }}
+            EOT
 
             echo "✅ .env file created in ~/app/.env"
             cat .env
@@ -44,7 +46,7 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@ec2-${{ secrets.AWS_EC2_HOST }}.ap-northeast-2.compute.amazonaws.com << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@ec2-${{ secrets.AWS_EC2_HOST }}.ap-northeast-2.compute.amazonaws.com << EOF
             cd ~/app
             git pull origin main
             docker-compose down
@@ -53,4 +55,4 @@ jobs:
           EOF
 
       - name: Clean up SSH Key
-        run: rm -f private_key.pem
+        run: rm -f project.pem
