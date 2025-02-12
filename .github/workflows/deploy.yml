@@ -15,12 +15,17 @@ jobs:
 
       - name: Set up SSH Key
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" | base64 --decode > private_key.pem
-          chmod 600 private_key.pem
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 --decode > project.pem
+          chmod 600 project.pem
+          ls -lah project.pem  # 🔥 Key 파일이 정상적으로 생성되었는지 확인
+
+      - name: Test SSH Connection
+        run: |
+          ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@ec2-${{ secrets.AWS_EC2_HOST }}.ap-northeast-2.compute.amazonaws.com "echo '✅ SSH 연결 성공!'"
 
       - name: Create .env file on EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@ec2-${{ secrets.AWS_EC2_HOST }}.ap-northeast-2.compute.amazonaws.com << 'EOF'
             cd ~/app
 
             echo "DATABASE_HOST=${{ secrets.DATABASE_HOST }}" > .env
@@ -39,7 +44,7 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@ec2-${{ secrets.AWS_EC2_HOST }}.ap-northeast-2.compute.amazonaws.com << 'EOF'
             cd ~/app
             git pull origin main
             docker-compose down
