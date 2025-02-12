@@ -44,15 +44,16 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@${{ secrets.AWS_EC2_HOST }} << 'EOF'
             cd /home/ubuntu/app
-
+            
             if docker-compose ps | grep 'Up'; then
               echo "🛑 컨테이너 실행 중 → docker-compose down 실행"
               docker-compose down
             else
               echo "✅ 실행 중인 컨테이너가 없음 → down 스킵"
             fi
-
-            docker-compose up -d --build > deployment.log 2>&1
+            echo "🚀 새로운 컨테이너 배포 시작"
+            docker-compose up -d --build > deployment.log 2>&1  # 🔥 실행 로그 강제 저장
+            echo "✅ Deployment complete!"
           EOF
 
       - name: Clean up SSH Key
