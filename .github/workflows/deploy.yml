@@ -2,7 +2,8 @@ name: Deploy to EC2
 
 on:
   push:
-    branches: [main]
+    branches:
+      - dev
 
 jobs:
   deploy:
@@ -59,7 +60,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.AWS_EC2_HOST }} << 'EOF'
             docker system prune -f
           EOF
-      
+
       - name: Docker run
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.AWS_EC2_HOST }} << 'EOF'
