@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ORIGIN } from './common/env';
+import { IS_NODE_ENV_PROD, ORIGIN } from './common/env';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -15,6 +15,8 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
+
+  if (!IS_NODE_ENV_PROD) console.log('is not prod');
 
   app.enableCors({
     origin: ORIGIN,
