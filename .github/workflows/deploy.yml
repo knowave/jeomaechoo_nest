@@ -45,6 +45,9 @@ jobs:
             AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             ORIGIN=${{ secrets.ORIGIN }}
             EOF_ENV
+            echo "✅ .env file created!"
+
+            cat .env
 
             if docker-compose ps | grep 'Up'; then
               echo "🛑 running container → docker-compose down"
