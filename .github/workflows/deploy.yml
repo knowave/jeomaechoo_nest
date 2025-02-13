@@ -44,15 +44,31 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@${{ secrets.AWS_EC2_HOST }} << 'EOF'
             cd /home/ubuntu/app
-            
+
+            if [ -d "app" ]; then
+              echo "📂 기존 프로젝트 폴더가 존재함 → 최신 코드로 업데이트"
+              cd jeomaechoo_nest
+              git reset --hard
+              git pull origin main
+            else
+              echo "🆕 프로젝트 폴더가 없음 → 새로 클론"
+              git clone https://github.com/knowave/jeomaechoo_nest.git app
+              cd jeomaechoo_nest
+            fi
+
             if docker-compose ps | grep 'Up'; then
               echo "🛑 컨테이너 실행 중 → docker-compose down 실행"
               docker-compose down
             else
               echo "✅ 실행 중인 컨테이너가 없음 → down 스킵"
             fi
+
+            echo "🔨 Docker 이미지 빌드 시작"
+            docker -t build jeomaechoo_nest .
+
             echo "🚀 새로운 컨테이너 배포 시작"
-            docker-compose up -d --build > deployment.log 2>&1  # 🔥 실행 로그 강제 저장
+            docker-compose up -d > deployment.log 2>&1
+            
             echo "✅ Deployment complete!"
           EOF
 
