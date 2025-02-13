@@ -34,7 +34,7 @@ jobs:
               cd jeomaechoo_nest
             fi
 
-            cat > .env <<EOF_ENV
+            cat << 'EOF_ENV' > .env
             DATABASE_HOST=${{ secrets.DATABASE_HOST }}
             DATABASE_PORT=${{ secrets.DATABASE_PORT }}
             DATABASE_USER=${{ secrets.DATABASE_USER }}
@@ -45,7 +45,6 @@ jobs:
             AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             ORIGIN=${{ secrets.ORIGIN }}
             EOF_ENV
-            echo "✅ .env file created!"
 
             cat .env
 
