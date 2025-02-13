@@ -55,16 +55,16 @@ jobs:
 
             if docker-compose ps | grep 'Up'; then
               echo "🛑 컨테이너 실행 중 → docker-compose down 실행"
-              docker-compose down
+              sudo docker-compose down
             else
               echo "✅ 실행 중인 컨테이너가 없음 → down 스킵"
             fi
 
             echo "🔨 Docker 이미지 빌드 시작"
-            docker -t build jeomaechoo_nest .
+            sudo docker -t build jeomaechoo_nest .
 
             echo "🚀 새로운 컨테이너 배포 시작"
-            docker-compose up -d > deployment.log 2>&1
+            sudo docker-compose up -d > deployment.log 2>&1
             
             echo "✅ Deployment complete!"
           EOF
