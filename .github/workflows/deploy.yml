@@ -52,7 +52,7 @@ jobs:
               echo "✅ docker-compose down skip."
             fi
 
-            echo "pwd $(pwd)"
+            echo "현재 경로 $(pwd)"
             sudo docker build -t jeomaechoo_nest .
             sudo docker-compose up -d > deployment.log 2>&1
           EOF
