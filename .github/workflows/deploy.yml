@@ -23,23 +23,6 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@${{ secrets.AWS_EC2_HOST }} "echo '✅ SSH 연결 성공!'"
 
-      - name: Create .env file on EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@${{ secrets.AWS_EC2_HOST }} << 'EOF'
-            cd ~/app
-
-            cat <<EOT > .env
-            DATABASE_HOST=${{ secrets.DATABASE_HOST }}
-            DATABASE_PORT=${{ secrets.DATABASE_PORT }}
-            DATABASE_USER=${{ secrets.DATABASE_USER }}
-            DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
-            DATABASE_NAME=${{ secrets.DATABASE_NAME }}
-            AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            ORIGIN=${{ secrets.ORIGIN }}
-          EOF
-
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@${{ secrets.AWS_EC2_HOST }} << 'EOF'
@@ -55,6 +38,20 @@ jobs:
               git clone https://github.com/knowave/jeomaechoo_nest.git app
               cd jeomaechoo_nest
             fi
+
+            echo "🌍 .env 파일 생성 중..."
+            cat <<EOT > .env
+            DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+            DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+            DATABASE_USER=${{ secrets.DATABASE_USER }}
+            DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+            DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+            AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}
+            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            ORIGIN=${{ secrets.ORIGIN }}
+            EOT
+            echo "✅ .env 파일 생성 완료!"
 
             if docker-compose ps | grep 'Up'; then
               echo "🛑 컨테이너 실행 중 → docker-compose down 실행"
