@@ -25,11 +25,11 @@ jobs:
             cd /home/ubuntu/app
 
             if [ -d "jeomaechoo_nest" ]; then
-              echo "📂 기존 프로젝트 폴더가 존재함 → 최신 코드로 업데이트"
+              echo "📂 git pull"
               cd jeomaechoo_nest
               git pull origin main
             else
-              echo "🆕 프로젝트 폴더가 없음 → 새로 클론"
+              echo "🆕 git clone"
               git clone https://github.com/knowave/jeomaechoo_nest.git
               cd jeomaechoo_nest
             fi
@@ -52,9 +52,11 @@ jobs:
               echo "✅ docker-compose down skip."
             fi
 
-            echo "현재 경로 $(pwd)"
-            sudo docker build -t jeomaechoo_nest .
-            sudo docker-compose up -d > deployment.log 2>&1
+            echo "🔨 Docker image build start..."
+            sudo docker build -t jeomaechoo_nest . || { echo "❌ Docker build failed"; exit 1; }
+
+            echo "🚀 Docker Compose execution start..."
+            sudo docker-compose up -d > deployment.log 2>&1 || { echo "❌ Docker Compose execution failed"; exit 1; }
           EOF
 
       - name: Clean up SSH Key
