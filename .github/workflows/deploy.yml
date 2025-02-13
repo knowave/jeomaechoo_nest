@@ -17,21 +17,16 @@ jobs:
         run: |
           echo "${{ secrets.EC2_SSH_KEY }}" > project.pem
           chmod 600 project.pem
-          ls -lah project.pem  # 🔥 Key 파일이 정상적으로 생성되었는지 확인
-
-      - name: Test SSH Connection
-        run: |
-          ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@${{ secrets.AWS_EC2_HOST }} "echo '✅ SSH 연결 성공!'"
+          ls -lah project.pem
 
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@${{ secrets.AWS_EC2_HOST }} << 'EOF'
             cd /home/ubuntu/app
 
-            if [ -d "app" ]; then
+            if [ -d "jeomaechoo_nest" ]; then
               echo "📂 기존 프로젝트 폴더가 존재함 → 최신 코드로 업데이트"
               cd jeomaechoo_nest
-              git reset --hard
               git pull origin main
             else
               echo "🆕 프로젝트 폴더가 없음 → 새로 클론"
@@ -39,7 +34,6 @@ jobs:
               cd jeomaechoo_nest
             fi
 
-            echo "🌍 .env 파일 생성 중..."
             cat <<EOT > .env
             DATABASE_HOST=${{ secrets.DATABASE_HOST }}
             DATABASE_PORT=${{ secrets.DATABASE_PORT }}
@@ -51,22 +45,16 @@ jobs:
             AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             ORIGIN=${{ secrets.ORIGIN }}
             EOT
-            echo "✅ .env 파일 생성 완료!"
 
             if docker-compose ps | grep 'Up'; then
-              echo "🛑 컨테이너 실행 중 → docker-compose down 실행"
               sudo docker-compose down
             else
-              echo "✅ 실행 중인 컨테이너가 없음 → down 스킵"
+              echo "✅ docker-compose down skip."
             fi
 
-            echo "🔨 Docker 이미지 빌드 시작"
+            echo "pwd $(pwd)"
             sudo docker build -t jeomaechoo_nest .
-
-            echo "🚀 새로운 컨테이너 배포 시작"
             sudo docker-compose up -d > deployment.log 2>&1
-            
-            echo "✅ Deployment complete!"
           EOF
 
       - name: Clean up SSH Key
