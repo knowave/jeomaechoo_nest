@@ -35,7 +35,7 @@ jobs:
               git pull origin main
             else
               echo "🆕 프로젝트 폴더가 없음 → 새로 클론"
-              git clone https://github.com/knowave/jeomaechoo_nest.git app
+              git clone https://github.com/knowave/jeomaechoo_nest.git
               cd jeomaechoo_nest
             fi
 
