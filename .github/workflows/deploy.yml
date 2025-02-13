@@ -22,6 +22,8 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i project.pem ubuntu@${{ secrets.AWS_EC2_HOST }} << 'EOF'
+            set -x
+            
             cd /home/ubuntu/app
 
             if [ -d "jeomaechoo_nest" ]; then
@@ -34,6 +36,7 @@ jobs:
               cd jeomaechoo_nest
             fi
 
+            echo "current path : $(pwd)"
             cat <<EOT > .env
             DATABASE_HOST=${{ secrets.DATABASE_HOST }}
             DATABASE_PORT=${{ secrets.DATABASE_PORT }}
