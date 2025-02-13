@@ -61,7 +61,7 @@ jobs:
             fi
 
             echo "🔨 Docker 이미지 빌드 시작"
-            sudo docker -t build jeomaechoo_nest .
+            sudo docker build -t jeomaechoo_nest .
 
             echo "🚀 새로운 컨테이너 배포 시작"
             sudo docker-compose up -d > deployment.log 2>&1
